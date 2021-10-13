@@ -31,8 +31,8 @@ function App() {
 
     if(nameA === nameB) return 1; //same words same arrangement
 
-    let nameAwords = nameA.trim().split(" ").map(x => x.toUpperCase());
-    let nameBwords = nameB.trim().split(" ").map(x => x.toUpperCase());
+    let nameAwords = nameA.split(" ").map(x => x.toUpperCase());
+    let nameBwords = nameB.split(" ").map(x => x.toUpperCase());
 
     if(checkIfWordsHasAbbrEquality(nameAwords, nameBwords)) return 3;
     
