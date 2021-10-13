@@ -24,10 +24,6 @@ const getExcelCell = {
 function App() {
   console.log(getEquals);
   const compareTwoNames = (nameA, nameB) => {
-    //0 = false
-
-    //match === '?', if only one word or letter is different in the names AND ...
-    //...first letter in the two columns are the same (only for last condition)?
     nameA = nameA.trim();
     nameB = nameB.trim();
     const nameAInitialLetter = nameA.length > 0 ? nameA[0] : '';
@@ -36,9 +32,10 @@ function App() {
     if(nameA === nameB) return 1; //same words same arrangement
 
     let nameAwords = nameA.trim().split(" ").map(x => x.toUpperCase());
-    //nameAwords = nameAwords.map(nameAword => getEquals[nameAword] ? getEquals[nameAword] : nameAword);
     let nameBwords = nameB.trim().split(" ").map(x => x.toUpperCase());
-    //nameBwords = nameBwords.map(nameBword => getEquals[nameBword] ? getEquals[nameBword] : nameBword);
+
+    if(checkIfWordsHasAbbrEquality(nameAwords, nameBwords)) return 3;
+    
     let setForNameA = new Set(nameAwords);
     let setForNameB = new Set(nameBwords);
 
@@ -46,39 +43,81 @@ function App() {
 
     if(wordCountDiff >= 2) return 0; //false
 
-    let count = 0;    
-
     if(nameAwords.length < nameBwords.length) {
-      //switching groups for A and B
-      let tempSet = setForNameB;
-      let tempWords = nameBwords
-      setForNameB = setForNameA;
-      nameBwords = nameAwords;
-      setForNameA = tempSet;
-      nameAwords = tempWords;
+      let res = switchNamesArrayAndSets(setForNameA, setForNameB, nameAwords, nameBwords);
+        setForNameA = res.setForNameA;
+        setForNameB = res.setForNameB;
+        nameAwords = res.nameAwords;
+        nameBwords = res.nameBwords;
     }
 
-    let oddWordOut = '';
+    let count = getCount(nameAwords, setForNameB);
 
+    if(count >= 2) return 0; //false if more than two words different
+
+    if(count === 0) return 2; //2 = same words different arrangement
+
+    if(isUnsure(count, nameAInitialLetter, nameBInitialLetter)) return '?';
+    //match === '?', if only one word or letter is different in the names AND ...
+    //...first letter in the two columns are the same (only for last condition)?
+  }
+
+  const checkIfWordsHasAbbrEquality = (nameAwords, nameBwords) => {
+    let nameAwordsHasAbbr = false;
+    let nameBwordsHasAbbr = false;
+
+    nameAwords = nameAwords.map(nameAword => {
+      if(getEquals[nameAword]) {
+        nameAwordsHasAbbr = true;
+      }
+      return nameAword;
+    })
+    nameBwords = nameBwords.map(nameBword => {
+      if(getEquals[nameBword]) {
+        nameBwordsHasAbbr = true;
+      }
+      return nameBword;
+    });
+
+    let nameAwordsWithoutAbbr = nameAwords.map(nameAword => getEquals[nameAword] ? getEquals[nameAword] : nameAword);
+    let nameBwordsWithoutAbbr = nameBwords.map(nameBword => getEquals[nameBword] ? getEquals[nameBword] : nameBword);
+
+    if((nameAwordsHasAbbr || nameBwordsHasAbbr) && JSON.stringify(nameBwordsWithoutAbbr) === JSON.stringify(nameAwordsWithoutAbbr)) {
+      return true
+    }
+
+    return false;
+  }
+
+  const switchNamesArrayAndSets = (setForNameA, setForNameB, nameAwords, nameBwords) => {
+    let tempSet = setForNameB;
+    let tempWords = nameBwords
+    setForNameB = setForNameA;
+    nameBwords = nameAwords;
+    setForNameA = tempSet;
+    nameAwords = tempWords;
+    return {setForNameA, setForNameB, nameAwords, nameBwords};
+  }
+
+  const getCount = (nameAwords, setForNameB) => {
+    let count = 0; 
     for(let wordA of nameAwords) {
       if(!setForNameB.has(wordA)) {
-        oddWordOut = wordA;
         count++;
       } else {
         setForNameB.delete(wordA);
       }
-      if(count >= 2) return 0; //false if more than two words different
     }
+    return count;
+  }
 
-    if(count === 0) return 2; //2 = same words different arrangement
-
+  const isUnsure = (count, nameAInitialLetter, nameBInitialLetter) => {
     if(count === 1) {
-      // if(nameBwords.length === nameAwords.length) return 0; //false
-      if(count === 1 && nameAInitialLetter === nameBInitialLetter) {
-        return '?'; //unsure if different word
+      if(nameAInitialLetter === nameBInitialLetter) {
+        return true; 
       }
     } 
-    
+    return false;
   }
 
   const inputChangeHandler = (x) => {
@@ -88,7 +127,9 @@ function App() {
         const row = rows[i];
         let match = compareTwoNames(row[getExcelCell['comnam']], row[getExcelCell['newvar']]);
         if(match === 1) row[getExcelCell['matched']] = 1;
-        if(match === 2) row[getExcelCell['matched']] = '?';
+        if(match === 2) row[getExcelCell['matched']] = 2;
+        if(match === 3) row[getExcelCell['matched']] = 3;
+        if(match === '?') row[getExcelCell['matched']] = '?';
       }
       exportData(rows);
     })
