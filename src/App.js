@@ -74,7 +74,7 @@ function App() {
 
     if(count === 1) {
       // if(nameBwords.length === nameAwords.length) return 0; //false
-      if(count === 1 && nameBwords.length > 1 && nameAInitialLetter === nameBInitialLetter) {
+      if(count === 1 && nameAInitialLetter === nameBInitialLetter) {
         return '?'; //unsure if different word
       }
     } 
