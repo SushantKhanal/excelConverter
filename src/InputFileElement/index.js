@@ -1,7 +1,7 @@
-import React, { Component } from "react";
+import React, { useEffect, useRef } from "react";
 import readXlsxFile from 'read-excel-file';
-import XLSX from "xlsx";
 import getEquals from '../Constants/equals';
+import ExcelMethods from "../Services/ExportToExcel";
 
 const getExcelCell = {
      'matched': 0, 
@@ -17,11 +17,17 @@ const getExcelCell = {
      'newvar': 10, 
      'similscore': 11
   }
-  
+
   //(12) ['matched', 'group_id', 'unique_id', 'companyname', 'cusip', 'unmatch', 'count', 
   // 'permno', 'ncusip', 'comnam', 'newvar', 'similscore']
 
 const InputElement = (props) => {
+
+    const excelMethodsRef = useRef();
+
+    useEffect(() => {
+      excelMethodsRef.current = new ExcelMethods();
+    }, []);
 
     const compareTwoNames = (nameA, nameB) => {
         nameA = nameA.trim();
@@ -73,7 +79,7 @@ const InputElement = (props) => {
             if(match === 3) row[getExcelCell['matched']] = 3;
             if(match === '?') row[getExcelCell['matched']] = '?';
             }
-            exportData(rows);
+            excelMethodsRef.current.exportData(rows);
         })
     }
 
@@ -128,7 +134,9 @@ const InputElement = (props) => {
         let nameAwordsWithoutAbbr = nameAwords.map(nameAword => getEquals[nameAword] ? getEquals[nameAword] : nameAword);
         let nameBwordsWithoutAbbr = nameBwords.map(nameBword => getEquals[nameBword] ? getEquals[nameBword] : nameBword);
     
-        if((nameAwordsHasAbbr || nameBwordsHasAbbr) && JSON.stringify(nameBwordsWithoutAbbr) === JSON.stringify(nameAwordsWithoutAbbr)) {
+        if((nameAwordsHasAbbr || nameBwordsHasAbbr) && JSON.stringify(nameBwordsWithoutAbbr) === JSON.stringify(nameAwordsWithoutAbbr) &&
+              JSON.stringify(nameAwords) !== JSON.stringify(nameBwords)
+        ) {
           return true
         }
     
@@ -144,11 +152,3 @@ const InputElement = (props) => {
 
 export default InputElement;
 
-function exportData(data)
-{
-    const filename='reports.xlsx';
-    let ws = XLSX.utils.json_to_sheet(data);
-    let wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "People");
-    XLSX.writeFile(wb,filename);
-}
